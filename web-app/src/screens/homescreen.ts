@@ -13,42 +13,46 @@ const { width, height } = Dimensions.get('window');
 const HomeScreen = ({ navigation }) => {
   const [carregando, setCarregando] = useState(false);
   const [localizacao, setLocalizacao] = useState(null);
-  const [erroMsg, setErroMsg] = useState(null);
 
-  // Hook para capturar localização ao iniciar
+  // Captura a localização real ao abrir o App
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setErroMsg('Permissão de localização negada.');
+        Alert.alert("Permissão Negada", "Precisamos do GPS para encontrar voluntários próximos.");
         return;
       }
 
-      let location = await Location.getCurrentPositionAsync({});
+      let location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High
+      });
       setLocalizacao(location.coords);
     })();
   }, []);
 
-  const lidarComSolicitacao = async () => {
+  const dispararPedidoAjuda = async () => {
     if (!localizacao) {
-      Alert.alert("Aguarde", "Ainda estamos a obter a sua localização GPS.");
+      Alert.alert("Aguarde", "Obtendo sinal do GPS...");
       return;
     }
 
     setCarregando(true);
     try {
       const payload = {
-        usuario_pcd_id: "italo_lopes_farias",
+        usuario_pcd_id: "Italo_Farias_PCD",
         latitude: localizacao.latitude,
         longitude: localizacao.longitude,
-        tipo_ajuda: "Apoio Geral"
+        tipo_ajuda: "Auxílio Locomoção"
       };
 
+      // Envia para o seu FastAPI (uvicorn)
       const resultado = await enviarSolicitacao(payload);
+      
+      // Vai para o radar passando o ID gerado pelo SQLite
       navigation.navigate('BuscaVoluntario', { solicitacaoId: resultado.id });
       
     } catch (err) {
-      Alert.alert("Erro", "Verifique se o seu servidor FastAPI está ligado.");
+      Alert.alert("Erro de Conexão", "Certifique-se que o servidor FastAPI está rodando em http://127.0.0.1:8000");
     } finally {
       setCarregando(false);
     }
@@ -58,9 +62,9 @@ const HomeScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.welcomeText}>Olá, Italo!</Text>
+          <Text style={styles.welcomeText}>Conecta Ação</Text>
           <Text style={styles.subText}>
-            {localizacao ? "Localização Ativa" : "A obter GPS..."}
+            {localizacao ? `GPS Ativo: ${localizacao.latitude.toFixed(4)}, ${localizacao.longitude.toFixed(4)}` : "Buscando satélites..."}
           </Text>
         </View>
         <MaterialIcons name="account-circle" size={45} color="#0047AB" />
@@ -79,14 +83,15 @@ const HomeScreen = ({ navigation }) => {
             }}
           >
             <Marker coordinate={localizacao}>
-              <View style={styles.markerPCD}>
-                <MaterialIcons name="accessible" size={30} color="#FFF" />
-              </View>
+               <View style={styles.myMarker}>
+                  <MaterialIcons name="accessible" size={24} color="#FFF" />
+               </View>
             </Marker>
           </MapView>
         ) : (
-          <View style={styles.loadingMap}>
+          <View style={styles.loadingArea}>
             <ActivityIndicator size="large" color="#0047AB" />
+            <Text>Localizando você...</Text>
           </View>
         )}
       </View>
@@ -94,17 +99,15 @@ const HomeScreen = ({ navigation }) => {
       <View style={styles.actionArea}>
         <TouchableOpacity 
           style={[styles.mainButton, (!localizacao || carregando) && styles.buttonDisabled]}
-          onPress={lidarComSolicitacao}
+          onPress={dispararPedidoAjuda}
           disabled={!localizacao || carregando}
         >
           {carregando ? (
             <ActivityIndicator size="large" color="#FFF" />
           ) : (
             <>
-              <View style={styles.iconCircle}>
-                <MaterialIcons name="front-hand" size={40} color="#FF8C00" />
-              </View>
-              <Text style={styles.buttonText}>SOLICITAR APOIO AGORA</Text>
+              <MaterialIcons name="front-hand" size={40} color="#FFF" />
+              <Text style={styles.buttonText}>PEDIR AJUDA AGORA</Text>
             </>
           )}
         </TouchableOpacity>
@@ -116,20 +119,4 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
   header: { flexDirection: 'row', justifyContent: 'space-between', padding: 20, paddingTop: 40 },
-  welcomeText: { fontSize: 26, fontWeight: 'bold', color: '#0047AB' },
-  subText: { fontSize: 14, color: '#666' },
-  mapContainer: { height: height * 0.45, width: width },
-  map: { ...StyleSheet.absoluteFillObject },
-  loadingMap: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#EEE' },
-  markerPCD: { backgroundColor: '#0047AB', padding: 5, borderRadius: 20, borderWidth: 2, borderColor: '#FFF' },
-  actionArea: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  mainButton: {
-    backgroundColor: '#FF8C00', width: width * 0.85, height: 160,
-    borderRadius: 30, justifyContent: 'center', alignItems: 'center', elevation: 8
-  },
-  buttonDisabled: { backgroundColor: '#CCC' },
-  iconCircle: { backgroundColor: '#FFF', padding: 12, borderRadius: 50, marginBottom: 10 },
-  buttonText: { color: '#FFF', fontSize: 18, fontWeight: '900' }
-});
-
-export default HomeScreen;
+  welcomeText: { fontSize: 24, fontWeight

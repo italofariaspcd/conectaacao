@@ -1,7 +1,13 @@
 import axios from 'axios';
 
+/**
+ * CONFIGURAÇÃO DE REDE:
+ * Como você está usando o Expo Go, o app roda no seu celular.
+ * Para ele "enxergar" o servidor no seu PC, usamos o seu IP local.
+ */
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000', // URL do seu FastAPI
+  baseURL: 'http://192.168.18.12:8000', 
+  timeout: 5000, // 5 segundos de limite para evitar que o app trave
 });
 
 export const enviarSolicitacao = async (dados) => {
@@ -9,7 +15,8 @@ export const enviarSolicitacao = async (dados) => {
     const response = await api.post('/solicitacoes/', dados);
     return response.data;
   } catch (error) {
-    console.error("Erro ao enviar solicitação:", error);
+    // Log detalhado para te ajudar no debug via terminal
+    console.error("Erro ao conectar com o FastAPI. Verifique o IP e o Firewall:", error.message);
     throw error;
   }
 };

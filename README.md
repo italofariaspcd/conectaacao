@@ -60,3 +60,21 @@ Contribuindo: Este é um projeto de código aberto focado em acessibilidade. Sin
 Onboarding e Entrada (Comum a ambos)Tela de Splash: 
 Logo animada (Conecta Ação).Boas-vindas: Breve explicação do propósito (3 slides rápidos).Login/Cadastro: Opções de login social ou e-mail.Seleção de Perfil: "Preciso de auxílio" ou "Quero ser voluntário".
 Nota: O perfil pode ser alternado nas configurações depois.2. Jornada do Usuário PCD (Solicitante)O foco aqui é velocidade e comandos de voz.Home (Mapa de Presença): Mostra quantos voluntários estão ativos por perto para passar segurança.Botão "Nova Solicitação": Um botão central de destaque.Definição da Ajuda:Categorias rápidas: (Locomoção, Leitura, Apoio Digital, Outros).Campo de texto ou Botão de Áudio (essencial para acessibilidade).Confirmação de Local e Raio: Confirma o ponto no mapa.Aguardando Conexão: Tela de radar procurando voluntários.Match de Ação: Exibe foto, nome e avaliação do voluntário que aceitou.Chat/Acompanhamento: Canal direto enquanto o voluntário se desloca.Conclusão: Botão de "Ação Concluída" e avaliação.3. Jornada do Voluntário (Apoiador)O foco aqui é clareza de informações e logística.Home (Mapa de Missões): Mapa interativo com pins de solicitações abertas.Detalhes da Missão: Ao clicar no pin, vê o que é necessário e a distância.Aceitar Desafio: Botão de confirmação de compromisso.Rota de Navegação: Integração com Google Maps/Waze para chegar ao local.Chat de Apoio: Para dúvidas rápidas com o solicitante.Check-in de Chegada: Notifica que o voluntário está no local.Finalização: Envio de um feedback rápido sobre a experiência.4. Telas de Suporte e PerfilPerfil do Usuário: Bio, conquistas (gamificação) e selos de verificação.Histórico de Ações: Lista de todas as conexões feitas no passado.Configurações de Acessibilidade: Ajuste de contraste, tamanho de fonte e leitores de tela.🛠️ Tabela de Transições CríticasDeParaGatilhoHome (PCD)Radar de BuscaClicar em "Solicitar Ajuda"Radar de BuscaMatch de AçãoVoluntário clicar em "Aceitar"Mapa de MissõesDetalhesVoluntário selecionar um PinMatch de AçãoConclusãoAmbos confirmarem o fim da tarefa
+
+
+
+Plaintext
+
+conecta-acao/
+├── api/                # Backend FastAPI
+│   ├── main.py         # Ponto de entrada
+│   ├── routes/         # Endpoints (usuarios, acoes, chat)
+│   ├── models/         # Modelos do Banco (SQLAlchemy/Tortoise)
+│   ├── schemas/        # Validação de dados (Pydantic)
+│   └── services/       # Lógica de negócio e geolocalização
+├── data/               # Scripts de Data Science e Analytics
+│   ├── pipeline/       # Ingestão de logs de ajuda
+│   └── analysis/       # Notebooks para medir tempo de resposta
+├── web-app/            # Frontend (React ou Flutter)
+├── docker-compose.yml  # Orquestração (App + Postgres/PostGIS)
+└── README.md           # Aquele que estruturamos
