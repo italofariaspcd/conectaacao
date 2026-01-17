@@ -14,43 +14,65 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
+      if (status !== 'granted') {
+        Alert.alert("Aviso", "A permissão de GPS é necessária.");
+        return;
+      }
       let location = await Location.getCurrentPositionAsync({});
       setLocalizacao(location.coords);
     })();
   }, []);
 
   const handleAjuda = async () => {
+    if(!localizacao) return;
     setCarregando(true);
     try {
       const res = await enviarSolicitacao({
         usuario_pcd_id: "Italo Farias",
         latitude: localizacao.latitude,
         longitude: localizacao.longitude,
-        tipo_ajuda: "Auxílio Geral"
+        tipo_ajuda: "Auxílio Locomoção"
       });
       navigation.navigate('BuscaVoluntario', { solicitacaoId: res.id });
-    } catch (e) { Alert.alert("Erro", "Falha ao conectar com o servidor."); }
-    finally { setCarregando(false); }
+    } catch (e) {
+      Alert.alert("Erro", "Não foi possível conectar ao servidor. Verifique o IP.");
+    } finally {
+      setCarregando(false);
+    }
   };
 
   return (
     <View style={styles.container}>
-      {localizacao ? (
-        <MapView style={styles.map} initialRegion={{
-          latitude: localizacao.latitude, longitude: localizacao.longitude,
-          latitudeDelta: 0.005, longitudeDelta: 0.005
-        }}>
-          <Marker coordinate={localizacao} title="Você está aqui" />
-        </MapView>
-      ) : <ActivityIndicator size="large" style={{flex:1}} />}
+      <View style={styles.mapArea}>
+        {localizacao ? (
+          <MapView 
+            provider={PROVIDER_GOOGLE}
+            style={styles.map} 
+            initialRegion={{
+              latitude: localizacao.latitude, 
+              longitude: localizacao.longitude,
+              latitudeDelta: 0.005, 
+              longitudeDelta: 0.005
+            }}
+          >
+            <Marker coordinate={localizacao} />
+          </MapView>
+        ) : (
+          <View style={styles.loadingMap}>
+            <ActivityIndicator size="large" color="#0047AB" />
+            <Text>Obtendo GPS...</Text>
+          </View>
+        )}
+      </View>
 
       <View style={styles.bottomArea}>
-        <TouchableOpacity style={styles.btn} onPress={handleAjuda} disabled={carregando}>
-          {carregando ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnText}>SOLICITAR APOIO</Text>}
+        <TouchableOpacity style={styles.btn} onPress={handleAjuda} disabled={carregando || !localizacao}>
+          {carregando ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnText}>SOLICITAR APOIO AGORA</Text>}
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Historico')}>
-          <Text style={{color: '#0047AB', marginTop: 15}}>Ver Histórico</Text>
+        
+        <TouchableOpacity style={styles.btnHistory} onPress={() => navigation.navigate('Historico')}>
+          <MaterialIcons name="history" size={24} color="#0047AB" />
+          <Text style={styles.btnHistoryText}>Ver Histórico</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -58,9 +80,13 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  map: { width: width, height: height * 0.6 },
-  bottomArea: { flex: 1, backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center' },
-  btn: { backgroundColor: '#FF8C00', width: width * 0.8, height: 70, borderRadius: 35, alignItems: 'center', justifyContent: 'center', elevation: 5 },
-  btnText: { color: '#FFF', fontSize: 20, fontWeight: 'bold' }
+  container: { flex: 1, backgroundColor: '#FFF' },
+  mapArea: { width: width, height: height * 0.65 },
+  map: { ...StyleSheet.absoluteFillObject },
+  loadingMap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  bottomArea: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 20 },
+  btn: { backgroundColor: '#FF8C00', width: width * 0.85, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center', elevation: 5 },
+  btnText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
+  btnHistory: { flexDirection: 'row', alignItems: 'center', marginTop: 25 },
+  btnHistoryText: { color: '#0047AB', fontSize: 16, fontWeight: 'bold', marginLeft: 8 }
 });

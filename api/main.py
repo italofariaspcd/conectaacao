@@ -1,17 +1,17 @@
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import Column, String, Float, DateTime, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from datetime import datetime
 import uuid
 
-# Configuração do SQLite
+# Configuração do Banco
 SQLALCHEMY_DATABASE_URL = "sqlite:///./conecta_acao.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# Modelo do Banco de Dados
 class Solicitacao(Base):
     __tablename__ = "solicitacoes"
     id = Column(String, primary_key=True, index=True)
@@ -24,7 +24,15 @@ class Solicitacao(Base):
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Conecta Ação - API")
+app = FastAPI()
+
+# LIBERAR CONEXÃO (CORS) - Importante para o celular conectar
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def get_db():
     db = SessionLocal()
@@ -40,7 +48,9 @@ def criar_solicitacao(req: dict, db: Session = Depends(get_db)):
         longitude=req.get('longitude'),
         tipo_ajuda=req.get('tipo_ajuda', 'Geral')
     )
-    db.add(nova); db.commit(); db.refresh(nova)
+    db.add(nova)
+    db.commit()
+    db.refresh(nova)
     return nova
 
 @app.get("/solicitacoes/")
