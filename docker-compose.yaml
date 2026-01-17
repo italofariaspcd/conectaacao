@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  # Banco de Dados com suporte Geoespacial
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: conecta_db
+    restart: always
+    environment:
+      POSTGRES_USER: italo_admin
+      POSTGRES_PASSWORD: senha_conecta_123
+      POSTGRES_DB: conecta_acao_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Backend FastAPI
+  api:
+    build: ./api
+    container_name: conecta_api
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://italo_admin:senha_conecta_123@db:5432/conecta_acao_db
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
