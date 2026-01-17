@@ -1,84 +1,57 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import Optional, Dict
+from fastapi import FastAPI, HTTPException, Depends
+from sqlalchemy import create_api_engine, Column, String, Float, DateTime, create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, Session
 from datetime import datetime
 import uuid
 
-app = FastAPI(
-    title="Conecta Ação API",
-    description="Backend para conexão entre PCDs e Voluntários"
-)
+# Configuração do Banco de Dados Local (SQLite)
+SQLALCHEMY_DATABASE_URL = "sqlite:///./conecta_acao.db"
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
 
-# --- MODELOS DE DADOS ---
+# --- MODELO DO BANCO (Tabela de Solicitações) ---
+class SolicitacaoModel(Base):
+    __tablename__ = "solicitacoes"
+    id = Column(String, primary_key=True, index=True)
+    usuario_pcd_id = Column(String)
+    latitude = Column(Float)
+    longitude = Column(Float)
+    tipo_ajuda = Column(String)
+    status = Column(String, default="buscando_voluntario")
+    criado_em = Column(DateTime, default=datetime.now)
 
-class SolicitacaoRequest(BaseModel):
-    usuario_pcd_id: str
-    latitude: float
-    longitude: float
-    tipo_ajuda: str
+# Cria as tabelas no arquivo .db
+Base.metadata.create_all(bind=engine)
 
-class SolicitacaoStatus(BaseModel):
-    id: str
-    status: str
-    voluntario_atribuido: Optional[Dict] = None
+app = FastAPI(title="Conecta Ação API - Local DB")
 
-# --- "BANCO DE DADOS" TEMPORÁRIO ---
-# Em um projeto de larga escala, aqui entraríamos com PostgreSQL + PostGIS
-solicitacoes_db = {}
+# Dependência para obter a sessão do banco
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-# --- ENDPOINTS ---
+@app.post("/solicitacoes/")
+def criar_solicitacao(req: dict, db: Session = Depends(get_db)):
+    nova_ajuda = SolicitacaoModel(
+        id=str(uuid.uuid4()),
+        usuario_pcd_id=req['usuario_pcd_id'],
+        latitude=req['latitude'],
+        longitude=req['longitude'],
+        tipo_ajuda=req['tipo_ajuda']
+    )
+    db.add(nova_ajuda)
+    db.commit()
+    db.refresh(nova_ajuda)
+    return nova_ajuda
 
-@app.get("/")
-async def home():
-    return {
-        "projeto": "Conecta Ação",
-        "status": "Online",
-        "endpoints_uteis": ["/docs", "/solicitacoes"]
-    }
-
-@app.post("/solicitacoes/", response_model=SolicitacaoStatus)
-async def criar_solicitacao(req: SolicitacaoRequest):
-    """
-    Cria uma nova solicitação de ajuda e inicia o radar.
-    """
-    id_solicitacao = str(uuid.uuid4())
-    nova_solicitacao = {
-        "id": id_solicitacao,
-        "usuario_pcd_id": req.usuario_pcd_id,
-        "status": "buscando_voluntario",
-        "voluntario_atribuido": None,
-        "criado_em": datetime.now()
-    }
-    solicitacoes_db[id_solicitacao] = nova_solicitacao
-    return nova_solicitacao
-
-@app.get("/solicitacoes/{id_solicitacao}", response_model=SolicitacaoStatus)
-async def checar_status(id_solicitacao: str):
-    """
-    O App Mobile consulta este endpoint via Polling para detectar mudanças.
-    """
-    if id_solicitacao not in solicitacoes_db:
-        raise HTTPException(status_code=404, detail="Solicitação expirada ou inexistente")
-    return solicitacoes_db[id_solicitacao]
-
-# --- ROTA DE SIMULAÇÃO (PARA TESTES) ---
-
-@app.post("/simular-aceite/{id_solicitacao}")
-async def simular_aceite(id_solicitacao: str):
-    """
-    Simula que um voluntário em Aracaju aceitou o chamado.
-    Use este endpoint pelo Swagger (/docs) para testar o App.
-    """
-    if id_solicitacao not in solicitacoes_db:
-        raise HTTPException(status_code=404, detail="ID Inválido")
-    
-    # Atualiza o status para disparar o gatilho no Mobile
-    solicitacoes_db[id_solicitacao]["status"] = "atendido"
-    solicitacoes_db[id_solicitacao]["voluntario_atribuido"] = {
-        "nome": "João Silva",
-        "avaliacao": 4.9,
-        "distancia": "500m",
-        "telefone": "79 99999-9999"
-    }
-    
-    return {"message": "Sucesso! O App deve navegar para a tela de Match agora."}
+@app.get("/solicitacoes/{id_solicitacao}")
+def checar_status(id_solicitacao: str, db: Session = Depends(get_db)):
+    item = db.query(SolicitacaoModel).filter(SolicitacaoModel.id == id_solicitacao).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Não encontrado")
+    return item
