@@ -1,5 +1,5 @@
 import { registerRootComponent } from 'expo';
 import App from './App';
 
-// Isso força o registro do componente principal na raiz do projeto
+// Força o registro do ponto de entrada do Conecta Ação
 registerRootComponent(App);

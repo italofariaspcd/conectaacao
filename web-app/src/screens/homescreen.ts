@@ -22,14 +22,14 @@ export default function HomeScreen({ navigation }) {
     setLoading(true);
     try {
       await enviarSolicitacao({
-        usuario_pcd_id: "Italo Farias",
+        usuario_pcd_id: "Italo Farias", //
         latitude: local.latitude,
         longitude: local.longitude,
         tipo_ajuda: "Apoio Locomoção"
       });
       navigation.navigate('Historico');
     } catch (e) {
-      Alert.alert("Erro", "Verifique se o Backend está rodando no IP 192.168.18.12");
+      Alert.alert("Erro de Conexão", "Verifique se o Backend está rodando no IP 192.168.18.12");
     } finally {
       setLoading(false);
     }
@@ -42,9 +42,11 @@ export default function HomeScreen({ navigation }) {
           latitude: local.latitude, longitude: local.longitude,
           latitudeDelta: 0.005, longitudeDelta: 0.005
         }}>
-          <Marker coordinate={local} title="Italo Farias" />
+          <Marker coordinate={local} title="Minha Localização" />
         </MapView>
-      ) : <ActivityIndicator size="large" style={{flex:1}} />}
+      ) : (
+        <View style={styles.centered}><ActivityIndicator size="large" color="#0047AB" /><Text>Obtendo GPS em Capela...</Text></View>
+      )}
       
       <TouchableOpacity style={styles.btn} onPress={pedirAjuda}>
         {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.txt}>SOLICITAR APOIO</Text>}
@@ -56,6 +58,7 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
-  btn: { position: 'absolute', bottom: 50, alignSelf: 'center', backgroundColor: '#FF8C00', padding: 20, borderRadius: 30, width: '80%', alignItems: 'center', elevation: 5 },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  btn: { position: 'absolute', bottom: 50, alignSelf: 'center', backgroundColor: '#FF8C00', padding: 20, borderRadius: 30, width: '85%', alignItems: 'center', elevation: 5 },
   txt: { color: '#FFF', fontWeight: 'bold', fontSize: 18 }
 });
