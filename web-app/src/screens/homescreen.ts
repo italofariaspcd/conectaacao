@@ -21,15 +21,15 @@ export default function HomeScreen({ navigation }) {
     if (!local) return;
     setLoading(true);
     try {
-      const res = await enviarSolicitacao({
+      await enviarSolicitacao({
         usuario_pcd_id: "Italo Farias",
         latitude: local.latitude,
         longitude: local.longitude,
         tipo_ajuda: "Apoio Locomoção"
       });
-      navigation.navigate('Historico'); // Vai direto para o histórico para confirmar
+      navigation.navigate('Historico');
     } catch (e) {
-      Alert.alert("Erro", "Servidor offline no IP 192.168.18.12");
+      Alert.alert("Erro", "Verifique se o Backend está rodando no IP 192.168.18.12");
     } finally {
       setLoading(false);
     }
@@ -47,7 +47,7 @@ export default function HomeScreen({ navigation }) {
       ) : <ActivityIndicator size="large" style={{flex:1}} />}
       
       <TouchableOpacity style={styles.btn} onPress={pedirAjuda}>
-        {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.txt}>SOLICITAR AJUDA</Text>}
+        {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.txt}>SOLICITAR APOIO</Text>}
       </TouchableOpacity>
     </View>
   );
@@ -56,6 +56,6 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
-  btn: { position: 'absolute', bottom: 50, alignSelf: 'center', backgroundColor: '#FF8C00', padding: 20, borderRadius: 30, width: '80%', alignItems: 'center' },
+  btn: { position: 'absolute', bottom: 50, alignSelf: 'center', backgroundColor: '#FF8C00', padding: 20, borderRadius: 30, width: '80%', alignItems: 'center', elevation: 5 },
   txt: { color: '#FFF', fontWeight: 'bold', fontSize: 18 }
 });

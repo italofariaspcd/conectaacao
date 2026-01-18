@@ -12,7 +12,6 @@ engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# Modelo da Tabela
 class Solicitacao(Base):
     __tablename__ = "solicitacoes"
     id = Column(String, primary_key=True, index=True)
@@ -27,7 +26,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-# Permite que o celular conecte na API
+# Permite que o celular acesse a API no seu IP local (192.168.18.12)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -44,7 +43,7 @@ def get_db():
 def criar_solicitacao(req: dict, db: Session = Depends(get_db)):
     nova = Solicitacao(
         id=str(uuid.uuid4()),
-        usuario_pcd_id=req.get('usuario_pcd_id', 'Italo Lopes de Farias'), # Seu nome
+        usuario_pcd_id=req.get('usuario_pcd_id', 'Italo Farias'),
         latitude=req.get('latitude'),
         longitude=req.get('longitude'),
         tipo_ajuda=req.get('tipo_ajuda', 'Geral')
